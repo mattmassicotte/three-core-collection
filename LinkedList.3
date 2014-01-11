@@ -1,0 +1,127 @@
+include "stdio.h"
+include "stdlib.h"
+
+namespace Core::Collection
+
+  public
+  struct LinkedListNode
+    *LinkedListNode next
+    *Void value
+  end
+
+  struct LinkedList
+    *LinkedListNode head
+  end
+
+  def linked_list_create(; *LinkedList)
+    *LinkedList list
+
+    list = malloc(sizeof(LinkedList))
+    list->head = null
+
+    return list
+  end
+
+  def linked_list_node_create(*Void value; *LinkedListNode)
+    *LinkedListNode node
+
+    node = malloc(sizeof(LinkedListNode))
+    node->value = value
+    node->next = null
+
+    return node
+  end
+
+  def LinkedListNode.get_value(; *Void)
+    return self->value
+  end
+
+  def LinkedList.add(*LinkedListNode node)
+    atomic
+      **LinkedListNode current = &(self->head)
+
+      loop
+        if *current == null
+          *current = node
+          break
+        end
+
+        current = &(*current)->next
+      end
+    end
+  end
+
+  def LinkedList.remove(*LinkedListNode node; Bool)
+    **LinkedListNode current = &(self->head)
+
+    # special case, head is null
+    if *current == null
+      return false
+    end
+
+    atomic
+      loop
+        # is this the node we want to remove?
+        if node == *current
+          *current = (*current)->next
+          return true
+        end
+
+        current = &(*current)->next
+      end
+    end
+
+    return false
+  end
+
+  def LinkedList.get_first_preallocated(*LinkedListNode node; Bool)
+    *LinkedListNode current
+
+    atomic
+      current = self->head
+      return false if current == null
+
+      self->head = current->next
+
+      # make a copy of the work item
+      *node = *current
+    end
+
+    # just free it for now
+    free(current)
+
+    return true
+  end
+
+  def LinkedList.enumerate({*LinkedListNode node; Bool} closure)
+    *LinkedListNode current = self->head
+
+    loop
+      if current == null
+        break
+      end
+
+      if closure(current) != true
+        break
+      end
+
+      current = current->next
+    end
+  end
+
+  def LinkedList.find({*LinkedListNode node; Bool} closure; *LinkedListNode)
+    *LinkedListNode found_node = null
+
+    self.enumerate(do (*LinkedListNode node; Bool; found_node) {
+        if closure(node)
+          found_node = node
+          return false
+        end
+
+        return true
+    })
+
+    return found_node
+  end
+
+end
